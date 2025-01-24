@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } else {
         // Login gagal
-        _showError('Invalid username or password');
+        _showError('Data tidak sesuai, harap isi dengan benar');
       }
     } catch (e) {
       _showError('An error occurred: $e');
