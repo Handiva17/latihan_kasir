@@ -32,15 +32,13 @@ class _HomeScreenState extends State<HomeScreen> {
           content: const Text('Apakah Anda yakin ingin logout?'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Menutup dialog
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Batal'),
             ),
             TextButton(
               onPressed: () {
-                _logout(); // Panggil fungsi logout
-                Navigator.of(context).pop(); // Menutup dialog
+                _logout();
+                Navigator.of(context).pop();
               },
               child: const Text('Logout'),
             ),
@@ -50,12 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
-  // Fungsi untuk logout
   Future<void> _logout() async {
-    // Logika untuk logout dari Supabase
     await supabase.auth.signOut();
-    // Kembali ke halaman login
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -92,17 +86,23 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _editProduct(int id, String namaProduk, double harga, int stok) async {
+  Future<void> _editProduct(
+      int id, String namaProduk, double harga, int stok) async {
     try {
-      final response = await supabase.from('produk').update({
-        'nama_produk': namaProduk,
-        'harga': harga,
-        'stok': stok,
-      }).eq('produk_id', id).select();
+      final response = await supabase
+          .from('produk')
+          .update({
+            'nama_produk': namaProduk,
+            'harga': harga,
+            'stok': stok,
+          })
+          .eq('produk_id', id)
+          .select();
 
       if (response != null && response.isNotEmpty) {
         setState(() {
-          final index = products.indexWhere((product) => product['produk_id'] == id);
+          final index =
+              products.indexWhere((product) => product['produk_id'] == id);
           if (index != -1) {
             products[index] = response.first;
           }
@@ -124,69 +124,129 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+  void _showDeleteConfirmation(int id, String namaProduk) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Hapus'),
+          content: Text('Apakah Anda yakin ingin menghapus produk "$namaProduk"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 81, 177, 255),
+                foregroundColor: Colors.white,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                _deleteProduct(id);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Hapus'),
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
   void _showAddProductDialog({Map<String, dynamic>? product}) {
+    final _formKey = GlobalKey<FormState>();
+
     final TextEditingController namaProdukController = TextEditingController(
-        text: product != null ? product['nama_produk'] : '');
+      text: product != null ? product['nama_produk'] : '',
+    );
     final TextEditingController hargaController = TextEditingController(
-        text: product != null ? product['harga'].toString() : '');
+      text: product != null ? product['harga'].toString() : '',
+    );
     final TextEditingController stokController = TextEditingController(
-        text: product != null ? product['stok'].toString() : '');
+      text: product != null ? product['stok'].toString() : '',
+    );
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(product == null ? 'Tambah Produk' : 'Edit Produk'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: namaProdukController,
-                decoration: const InputDecoration(labelText: 'Nama Produk'),
-              ),
-              TextField(
-                controller: hargaController,
-                decoration: const InputDecoration(labelText: 'Harga'),
-                keyboardType: TextInputType.number,
-              ),
-              TextField(
-                controller: stokController,
-                decoration: const InputDecoration(labelText: 'Stok'),
-                keyboardType: TextInputType.number,
-              ),
-            ],
+          content: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: namaProdukController,
+                  decoration: const InputDecoration(labelText: 'Nama Produk'),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Nama produk tidak boleh kosong' : null,
+                ),
+                TextFormField(
+                  controller: hargaController,
+                  decoration: const InputDecoration(labelText: 'Harga'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value!.isEmpty) return 'Harga tidak boleh kosong';
+                    return double.tryParse(value) == null
+                        ? 'Masukkan harga dengan benar'
+                        : null;
+                  },
+                ),
+                TextFormField(
+                  controller: stokController,
+                  decoration: const InputDecoration(labelText: 'Stok'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value!.isEmpty) return 'Stok tidak boleh kosong';
+                    return int.tryParse(value) == null
+                        ? 'Masukkan stok dengan benar'
+                        : null;
+                  },
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Batal'),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                    const Color.fromARGB(255, 81, 177, 255),
+                foregroundColor: Colors.white,
+              ),
             ),
             TextButton(
               onPressed: () {
-                final String namaProduk = namaProdukController.text;
-                final double harga = double.tryParse(hargaController.text) ?? 0.0;
-                final int stok = int.tryParse(stokController.text) ?? 0;
+                if (_formKey.currentState!.validate()) {
+                  final String namaProduk = namaProdukController.text;
+                  final double harga = double.parse(hargaController.text);
+                  final int stok = int.parse(stokController.text);
 
-                if (namaProduk.isNotEmpty && harga > 0 && stok >= 0) {
                   if (product == null) {
                     _addProduct(namaProduk, harga, stok);
                   } else {
                     _editProduct(product['produk_id'], namaProduk, harga, stok);
                   }
                   Navigator.of(context).pop();
-                } else {
-                  _showError('Mohon isi data dengan benar.'); // dikasih spesifik 
                 }
               },
               child: const Text('Simpan'),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                    const Color.fromARGB(255, 33, 114, 243),
+                foregroundColor: Colors.white,
+              ),
             ),
           ],
         );
@@ -196,9 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildProdukPage() {
     return isLoading
-        ? const Center(
-            child: CircularProgressIndicator(),
-          )
+        ? const Center(child: CircularProgressIndicator())
         : products.isEmpty
             ? const Center(
                 child: Text(
@@ -237,11 +295,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _showAddProductDialog(product: product),
+                            onPressed: () =>
+                                _showAddProductDialog(product: product),
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteProduct(product['produk_id']),
+                            onPressed: () => _showDeleteConfirmation(
+                              product['produk_id'],
+                              product['nama_produk'],
+                            ),
                           ),
                         ],
                       ),
@@ -255,20 +317,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        iconTheme: IconThemeData(
-    color: Colors.white, // Change icon color to white
-  ),
         title: const Text(
           "Kasir Warteg",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: const Color.fromARGB(255, 7, 79, 186),
-         actions: [
-        IconButton(
+        actions: [
+          IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: _showLogoutConfirmation, // Tampilkan dialog konfirmasi logout
+            color: Colors.white,
+            onPressed: _showLogoutConfirmation,
           ),
-         ],
+        ],
       ),
       body: IndexedStack(
         index: _currentIndex,
@@ -285,6 +345,9 @@ class _HomeScreenState extends State<HomeScreen> {
             _currentIndex = index;
           });
         },
+        backgroundColor: const Color.fromARGB(255, 7, 79, 186), // Background color
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_bag),
@@ -303,7 +366,8 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: _currentIndex == 0
           ? FloatingActionButton(
               onPressed: () => _showAddProductDialog(),
-              child: const Icon(Icons.add),
+              child: const Icon(Icons.add, color: Colors.white),
+              backgroundColor: const Color.fromARGB(255, 7, 79, 186),
             )
           : null,
     );

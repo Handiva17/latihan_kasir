@@ -81,6 +81,39 @@ class _PelangganScreenState extends State<PelangganScreen> {
     }
   }
 
+  void _showDeleteConfirmation(int id, String namaPelanggan) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Hapus'),
+          content: Text('Apakah Anda yakin ingin menghapus pelanggan "$namaPelanggan"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 81, 177, 255),
+                foregroundColor: Colors.white,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                _deletePelanggan(id);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Hapus'),
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -88,6 +121,7 @@ class _PelangganScreenState extends State<PelangganScreen> {
   }
 
   void _showAddPelangganDialog({Map<String, dynamic>? pelangganData}) {
+    final _formKey = GlobalKey<FormState>();
     final TextEditingController namaController = TextEditingController(
         text: pelangganData != null ? pelangganData['nama_pelanggan'] : '');
     final TextEditingController alamatController = TextEditingController(
@@ -100,23 +134,36 @@ class _PelangganScreenState extends State<PelangganScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(pelangganData == null ? 'Tambah Pelanggan' : 'Edit Pelanggan'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: namaController,
-                decoration: const InputDecoration(labelText: 'Nama Pelanggan'),
-              ),
-              TextField(
-                controller: alamatController,
-                decoration: const InputDecoration(labelText: 'Alamat'),
-              ),
-              TextField(
-                controller: nomorTeleponController,
-                decoration: const InputDecoration(labelText: 'Nomor Telepon'),
-                keyboardType: TextInputType.phone,
-              ),
-            ],
+          content: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: namaController,
+                  decoration: const InputDecoration(labelText: 'Nama Pelanggan'),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Nama pelanggan tidak boleh kosong' : null,
+                ),
+                TextFormField(
+                  controller: alamatController,
+                  decoration: const InputDecoration(labelText: 'Alamat'),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Alamat tidak boleh kosong' : null,
+                ),
+                TextFormField(
+                  controller: nomorTeleponController,
+                  decoration: const InputDecoration(labelText: 'Nomor Telepon'),
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value!.isEmpty) return 'Nomor telepon tidak boleh kosong';
+                    return RegExp(r'^\d+$').hasMatch(value)
+                        ? null
+                        : 'Masukkan nomor telepon yang benar';
+                  },
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -124,25 +171,33 @@ class _PelangganScreenState extends State<PelangganScreen> {
                 Navigator.of(context).pop();
               },
               child: const Text('Batal'),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                    const Color.fromARGB(255, 81, 177, 255),
+                foregroundColor: Colors.white,
+              ),
             ),
             TextButton(
               onPressed: () {
-                final String nama = namaController.text;
-                final String alamat = alamatController.text;
-                final String nomorTelepon = nomorTeleponController.text;
+                if (_formKey.currentState!.validate()) {
+                  final String nama = namaController.text;
+                  final String alamat = alamatController.text;
+                  final String nomorTelepon = nomorTeleponController.text;
 
-                if (nama.isNotEmpty && alamat.isNotEmpty && nomorTelepon.isNotEmpty) {
                   if (pelangganData == null) {
                     _addPelanggan(nama, alamat, nomorTelepon);
                   } else {
-                    _editPelanggan(pelangganData['pelanggan_id'], nama, alamat, nomorTelepon);
+                    _editPelanggan(
+                        pelangganData['pelanggan_id'], nama, alamat, nomorTelepon);
                   }
                   Navigator.of(context).pop();
-                } else {
-                  _showError('Mohon isi semua data dengan benar.');
                 }
               },
               child: const Text('Simpan'),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 33, 114, 243),
+                foregroundColor: Colors.white,
+              ),
             ),
           ],
         );
@@ -197,11 +252,15 @@ class _PelangganScreenState extends State<PelangganScreen> {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
-                              onPressed: () => _showAddPelangganDialog(pelangganData: item),
+                              onPressed: () =>
+                                  _showAddPelangganDialog(pelangganData: item),
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deletePelanggan(item['pelanggan_id']),
+                              onPressed: () => _showDeleteConfirmation(
+                                item['pelanggan_id'],
+                                item['nama_pelanggan'],
+                              ),
                             ),
                           ],
                         ),
@@ -211,7 +270,8 @@ class _PelangganScreenState extends State<PelangganScreen> {
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddPelangganDialog(),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: const Color.fromARGB(255, 7, 79, 186),
       ),
     );
   }

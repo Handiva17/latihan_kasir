@@ -10,6 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>(); // Key untuk form validation
   final TextEditingController nameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _isPasswordVisible = false; // Untuk mengontrol visibilitas password
@@ -18,6 +19,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final SupabaseClient supabase = Supabase.instance.client;
 
   Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) {
+      // Jika form tidak valid, hentikan proses login
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -42,10 +48,10 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } else {
         // Login gagal
-        _showError('Data tidak sesuai, harap isi dengan benar');
+        _showError('Username atau password salah, harap isi dengan benar.');
       }
     } catch (e) {
-      _showError('An error occurred: $e');
+      _showError('Terjadi kesalahan: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -74,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Color.fromARGB(255, 223, 239, 255),
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
@@ -85,68 +91,130 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      const Text(
-                        'Login',
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 32,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: nameController,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        const Text(
+                          'Login',
+                          style: TextStyle(
+                            color: Color(0xff1F509A),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 32,
                           ),
-                          labelText: 'User Name',
-                          prefixIcon: const Icon(Icons.person),
                         ),
-                      ),
-                      const SizedBox(height: 15),
-                      TextField(
-                        controller: passwordController,
-                        obscureText: !_isPasswordVisible, // Mengontrol visibilitas password
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          labelText: 'Password',
-                          prefixIcon: const Icon(Icons.lock),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: nameController,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: const Color.fromARGB(255, 33, 58, 243),
+                                width: 2,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: const Color.fromARGB(255, 0, 19, 114),
+                                width: 1,
+                              ),
+                            ),
+                            labelText: 'User Name',
+                            labelStyle: TextStyle(
+                                color: const Color.fromARGB(255, 9, 0, 78)),
+                            prefixIcon: const Icon(Icons.person),
+                            prefixIconColor: const Color.fromARGB(255, 0, 2, 135),
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Username tidak boleh kosong';
+                            }
+                            return null;
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                        const SizedBox(height: 15),
+                        TextFormField(
+                          controller: passwordController,
+                          obscureText:
+                              !_isPasswordVisible, // Mengontrol visibilitas password
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: const Color.fromARGB(255, 33, 58, 243),
+                                width: 2,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: const Color.fromARGB(255, 0, 19, 114),
+                                width: 1,
+                              ),
+                            ),
+                            labelText: 'Password',
+                            labelStyle: TextStyle(
+                                color: const Color.fromARGB(255, 9, 0, 78)),
+                            prefixIcon: const Icon(Icons.lock),
+                            prefixIconColor: const Color.fromARGB(255, 0, 2, 135),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: _isPasswordVisible
+                                    ? const Color.fromARGB(255, 81, 69, 255)
+                                    : const Color.fromARGB(255, 0, 6, 84),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                            ),
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Password tidak boleh kosong';
+                            }
+                            if (value.length < 1) {
+                              return 'Password tidak sesuai';
+                            }
+                            return null;
+                          },
                         ),
-                        onPressed: _isLoading ? null : _login,
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : const Text('Login'),
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 50),
+                            backgroundColor: Color(0xff0A3981),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: _isLoading ? null : _login,
+                          child: _isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : const Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -154,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-      backgroundColor: const Color(0xFFF5F5F5), // Warna latar belakang
+      backgroundColor: Colors.white, // Warna latar belakang
     );
   }
 }
