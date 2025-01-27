@@ -334,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _currentIndex,
         children: [
           _buildProdukPage(),
-          const TransaksiScreen(),
+          const TransaksiPage(),
           const PelangganScreen(),
         ],
       ),
