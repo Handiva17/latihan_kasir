@@ -28,14 +28,14 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _logout() async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.clear(); // Hapus data pengguna jika diperlukan
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(builder: (context) => const LoginScreen()),
-    (Route<dynamic> route) => false, // Hapus semua route sebelumnya
-  );
-}
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Hapus data pengguna jika diperlukan
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (Route<dynamic> route) => false, // Hapus semua route sebelumnya
+    );
+  }
 
   void _showLogoutConfirmation() {
     showDialog(
@@ -49,12 +49,20 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: () {
                 Navigator.of(context).pop(); // Tutup dialog
               },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.grey[300], // Warna latar belakang tombol
+                foregroundColor: Colors.black, // Warna teks
+              ),
               child: const Text('Batal'),
             ),
             TextButton(
               onPressed: () {
                 _logout(); // Panggil fungsi logout
               },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.red, // Warna latar belakang tombol
+                foregroundColor: Colors.white, // Warna teks
+              ),
               child: const Text('Logout'),
             ),
           ],
@@ -67,21 +75,82 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Profil')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Username: $_username', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 10),
-            Text('Role: $_role', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _showLogoutConfirmation, // Panggil dialog konfirmasi
-              child: const Text('Logout'),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
-          ],
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Ikon Profil
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.blueAccent,
+                    child: const Icon(
+                      Icons.person,
+                      size: 50,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Username
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.person, size: 30),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Username: $_username',
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Role
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.work,
+                          size: 30), // Ikon role yang lebih sesuai
+                      const SizedBox(width: 10),
+                      Text(
+                        'Role: $_role',
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Tombol Logout
+                  ElevatedButton(
+                    onPressed:
+                        _showLogoutConfirmation, // Panggil dialog konfirmasi
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Colors.red, // Warna latar belakang tombol
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 15), // Padding tombol
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(30), // Bentuk tombol
+                      ),
+                    ),
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

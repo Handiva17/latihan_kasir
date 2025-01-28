@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login.dart';
 import 'profile.dart';
 import 'transaksi.dart'; // Halaman Transaksi
@@ -20,11 +21,21 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = true;
   int _currentIndex = 0;
   final PageController _pageController = PageController();
+  String _userRole = '';
+  
 
   @override
   void initState() {
     super.initState();
+    _fetchUserRole();
     _fetchProducts();
+  }
+
+  Future<void> _fetchUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userRole = prefs.getString('role') ?? '';
+    });
   }
 
 
@@ -283,6 +294,65 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               );
   }
+ 
+
+    List<BottomNavigationBarItem> _getBottomNavItems() {
+      if (_userRole == 'Admin') {
+        return const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag),
+            label: 'Produk',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add_shopping_cart),
+            label: 'Transaksi',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Riwayat',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people),
+            label: 'Pelanggan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.app_registration),
+            label: 'Registrasi',
+          ),
+        ];
+      } else if (_userRole == 'Petugas') {
+        return const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add_shopping_cart),
+            label: 'Transaksi',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Riwayat',
+          ),
+        ];
+      }
+      return []; // Kembalikan list kosong jika role tidak dikenali
+    }
+
+    // Tentukan halaman yang ditampilkan berdasarkan role
+    List<Widget> _getPages() {
+      if (_userRole == 'Admin') {
+        return [
+          _buildProdukPage(),
+          const TransaksiPage(),
+          const RiwayatPage(),
+          const PelangganScreen(),
+          const RegistrasiPage(),
+        ];
+      } else if (_userRole == 'Petugas') {
+        return [
+          const TransaksiPage(),
+          const RiwayatPage(),
+        ];
+      }
+      return []; // Kembalikan list kosong jika role tidak dikenali
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -306,21 +376,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: _currentIndex == 5 ? const ProfilePage() : PageView(
+      body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
-        children: [
-          _buildProdukPage(),
-          const TransaksiPage(),
-          const RiwayatPage(),
-          const PelangganScreen(),
-          const RegistrasiPage(),
-          const ProfilePage(),
-        ],
+        children: _getPages(), // Gunakan metode _getPages()
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -331,32 +394,10 @@ class _HomeScreenState extends State<HomeScreen> {
           });
           _pageController.jumpToPage(index);
         },
-        backgroundColor:
-            const Color.fromARGB(255, 7, 80, 190), // Background color
+        backgroundColor: const Color.fromARGB(255, 7, 80, 190),
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white70,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag),
-            label: 'Produk',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add_shopping_cart),
-            label: 'Transaksi',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Riwayat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Pelanggan',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.app_registration),
-            label: 'Registrasi',
-          ),
-        ],
+        items: _getBottomNavItems(), // Gunakan metode _getBottomNavItems()
       ),
       floatingActionButton: _currentIndex == 0
           ? FloatingActionButton(

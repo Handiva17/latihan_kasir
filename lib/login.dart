@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final String password = passwordController.text.trim();
 
     try {
-      // Query ke Supabase untuk validasi user
+      // Query ke Supabase untuk validasi user dengan role
       final response = await supabase
           .from('user')
           .select('username, role') // Ambil username & role
@@ -51,6 +51,9 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
+
+        // Tambahkan pesan sukses berdasarkan role
+        _showSuccessMessage(response['role']);
       } else {
         _showError('Username atau password salah, harap isi dengan benar.');
       }
@@ -63,9 +66,21 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _showSuccessMessage(String role) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Login berhasil sebagai $role'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 
@@ -84,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Color.fromARGB(255, 223, 239, 255),
+                    color: Colors.white, // Warna latar belakang container
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
@@ -115,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            labelText: 'User  Name',
+                            labelText: 'User Name',
                             prefixIcon: const Icon(Icons.person),
                           ),
                           validator: (value) {
@@ -158,11 +173,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: _isLoading ? null : _login,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff1F509A), // Warna tombol
+                            padding: const EdgeInsets.symmetric(vertical: 15), // Padding tombol
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30), // Bentuk tombol
+                            ),
+                            minimumSize: const Size(double.infinity, 50), // Lebar tombol penuh dan tinggi 50
+                          ),
                           child: _isLoading
                               ? const CircularProgressIndicator(
                                   color: Colors.white,
                                 )
-                              : const Text('Login'),
+                              : const Text(
+                                  'Login',
+                                  style: TextStyle(fontSize: 16, color: Colors.white),
+                                ),
                         ),
                       ],
                     ),
@@ -173,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xffEAEAEA), // Warna latar belakang halaman
     );
   }
 }
