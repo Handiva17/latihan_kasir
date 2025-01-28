@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'home.dart'; // Import halaman home
 
 class LoginScreen extends StatefulWidget {
@@ -20,8 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) {
-      // Jika form tidak valid, hentikan proses login
-      return;
+      return; // Jika form tidak valid, hentikan proses login
     }
 
     setState(() {
@@ -35,19 +35,23 @@ class _LoginScreenState extends State<LoginScreen> {
       // Query ke Supabase untuk validasi user
       final response = await supabase
           .from('user')
-          .select()
+          .select('username, role') // Ambil username & role
           .eq('username', username)
           .eq('password', password)
           .maybeSingle();
 
       if (response != null) {
-        // Login berhasil
+        // Simpan data user ke SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('username', response['username']);
+        await prefs.setString('role', response['role']); // Simpan role
+
+        // Login berhasil, arahkan ke HomeScreen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } else {
-        // Login gagal
         _showError('Username atau password salah, harap isi dengan benar.');
       }
     } catch (e) {
@@ -111,25 +115,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(
-                                color: const Color.fromARGB(255, 33, 58, 243),
-                                width: 2,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(
-                                color: const Color.fromARGB(255, 0, 19, 114),
-                                width: 1,
-                              ),
-                            ),
-                            labelText: 'User Name',
-                            labelStyle: TextStyle(
-                                color: const Color.fromARGB(255, 9, 0, 78)),
+                            labelText: 'User  Name',
                             prefixIcon: const Icon(Icons.person),
-                            prefixIconColor: const Color.fromARGB(255, 0, 2, 135),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -141,39 +128,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 15),
                         TextFormField(
                           controller: passwordController,
-                          obscureText:
-                              !_isPasswordVisible, // Mengontrol visibilitas password
+                          obscureText: !_isPasswordVisible,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(
-                                color: const Color.fromARGB(255, 33, 58, 243),
-                                width: 2,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(
-                                color: const Color.fromARGB(255, 0, 19, 114),
-                                width: 1,
-                              ),
-                            ),
                             labelText: 'Password',
-                            labelStyle: TextStyle(
-                                color: const Color.fromARGB(255, 9, 0, 78)),
                             prefixIcon: const Icon(Icons.lock),
-                            prefixIconColor: const Color.fromARGB(255, 0, 2, 135),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _isPasswordVisible
                                     ? Icons.visibility
                                     : Icons.visibility_off,
-                                color: _isPasswordVisible
-                                    ? const Color.fromARGB(255, 81, 69, 255)
-                                    : const Color.fromARGB(255, 0, 6, 84),
                               ),
                               onPressed: () {
                                 setState(() {
@@ -186,32 +152,17 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (value == null || value.isEmpty) {
                               return 'Password tidak boleh kosong';
                             }
-                            if (value.length < 1) {
-                              return 'Password tidak sesuai';
-                            }
                             return null;
                           },
                         ),
                         const SizedBox(height: 20),
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 50),
-                            backgroundColor: Color(0xff0A3981),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
                           onPressed: _isLoading ? null : _login,
                           child: _isLoading
                               ? const CircularProgressIndicator(
                                   color: Colors.white,
                                 )
-                              : const Text(
-                                  'Login',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                  ),
-                                ),
+                              : const Text('Login'),
                         ),
                       ],
                     ),
@@ -222,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-      backgroundColor: Colors.white, // Warna latar belakang
+      backgroundColor: Colors.white,
     );
   }
 }

@@ -15,7 +15,6 @@ class _TransaksiPageState extends State<TransaksiPage> {
   List<Map<String, dynamic>> _cart = [];
   List<Map<String, dynamic>> _products = [];
   List<Map<String, dynamic>> _customers = [];
-  List<Map<String, dynamic>> _transactionHistory = [];
   String? _selectedCustomer;
   double _totalPrice = 0;
 
@@ -24,7 +23,6 @@ class _TransaksiPageState extends State<TransaksiPage> {
     super.initState();
     _fetchProducts();
     _fetchCustomers();
-    _fetchTransactionHistory();
   }
 
   Future<void> _fetchProducts() async {
@@ -46,19 +44,6 @@ class _TransaksiPageState extends State<TransaksiPage> {
       });
     } catch (error) {
       debugPrint('Error fetching customers: $error');
-    }
-  }
-
-  Future<void> _fetchTransactionHistory() async {
-    try {
-      final response = await _supabase.from('penjualan').select(
-          'penjualan_id, tanggal_penjualan, total_harga, pelanggan_id');
-      setState(() {
-        _transactionHistory = List<Map<String, dynamic>>.from(
-            response as List<dynamic>);
-      });
-    } catch (error) {
-      debugPrint('Error fetching transaction history: $error');
     }
   }
 
@@ -84,7 +69,6 @@ class _TransaksiPageState extends State<TransaksiPage> {
     });
   }
 
-
   void _calculateTotal() {
     double total = _cart.fold(
       0,
@@ -97,9 +81,6 @@ class _TransaksiPageState extends State<TransaksiPage> {
       _totalPrice = total;
     });
   }
-
-
-
 
   Future<void> _checkout() async {
     if (_cart.isEmpty) return;
@@ -129,9 +110,6 @@ class _TransaksiPageState extends State<TransaksiPage> {
         _totalPrice = 0;
       });
 
-      // Refresh transaction history
-      await _fetchTransactionHistory();
-
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Transaksi berhasil!')));
     } catch (error) {
@@ -139,11 +117,6 @@ class _TransaksiPageState extends State<TransaksiPage> {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Terjadi kesalahan saat transaksi.')));
     }
-  }
-
-  String _formatDateTime(String dateTime) {
-    final date = DateTime.parse(dateTime);
-    return DateFormat('dd MMM yyyy, HH:mm').format(date);
   }
 
   Widget _buildProductList() {
@@ -157,7 +130,7 @@ class _TransaksiPageState extends State<TransaksiPage> {
           child: ListTile(
             title: Text(product['nama_produk'],
                 style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('Harga: ${product['harga']}'),
+            subtitle: Text('Harga: Rp ${product['harga']}'),
             trailing: ElevatedButton(
               onPressed: () => _addToCart(product),
               child: const Text('Tambah'),
@@ -176,8 +149,7 @@ class _TransaksiPageState extends State<TransaksiPage> {
             margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
             child: ListTile(
               title: Text(item['nama_produk']),
-              subtitle:
-                  Text('Harga: ${item['harga']} x ${item['quantity']}'),
+              subtitle: Text('Harga: Rp ${item['harga']} x ${item['quantity']}'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -197,7 +169,7 @@ class _TransaksiPageState extends State<TransaksiPage> {
         ListTile(
           title: const Text('Total Harga',
               style: TextStyle(fontWeight: FontWeight.bold)),
-          trailing: Text(_totalPrice.toStringAsFixed(2)),
+          trailing: Text('Rp ${_totalPrice.toStringAsFixed(2)}'),
         ),
         ElevatedButton(
           onPressed: _checkout,
@@ -207,39 +179,13 @@ class _TransaksiPageState extends State<TransaksiPage> {
     );
   }
 
-  Widget _buildTransactionHistory() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Riwayat Transaksi',
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-      ),
-      ..._transactionHistory.map((transaction) {
-        // Format hanya tanggal tanpa jam
-        final formattedDate = DateFormat('dd MMMM yyyy').format(
-          DateTime.parse(transaction['tanggal_penjualan']),
-        );
-
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-          child: ListTile(
-            title: Text('Transaksi #${transaction['penjualan_id']}'),
-            subtitle: Text('Tanggal: $formattedDate'),
-            trailing: Text('Total: Rp ${transaction['total_harga']}'),
-          ),
-        );
-      }),
-    ],
-  );
-}
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Transaksi'),
+        title: const Text('Transaksi', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.blue,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -282,8 +228,6 @@ class _TransaksiPageState extends State<TransaksiPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             _buildCart(),
-            const Divider(),
-            _buildTransactionHistory(),
           ],
         ),
       ),

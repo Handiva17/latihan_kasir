@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login.dart';
+import 'profile.dart';
 import 'transaksi.dart'; // Halaman Transaksi
 import 'pelanggan.dart'; // Halaman Pelanggan
+import 'registrasi.dart'; // Halaman Registrasi
+import 'riwayat.dart'; // Halaman Riwayat
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -16,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> products = [];
   bool isLoading = true;
   int _currentIndex = 0;
+  final PageController _pageController = PageController();
 
   @override
   void initState() {
@@ -23,38 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchProducts();
   }
 
-  void _showLogoutConfirmation() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Konfirmasi Logout'),
-          content: const Text('Apakah Anda yakin ingin logout?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
-            ),
-            TextButton(
-              onPressed: () {
-                _logout();
-                Navigator.of(context).pop();
-              },
-              child: const Text('Logout'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _logout() async {
-    await supabase.auth.signOut();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
-  }
 
   Future<void> _fetchProducts() async {
     try {
@@ -130,7 +102,8 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Konfirmasi Hapus'),
-          content: Text('Apakah Anda yakin ingin menghapus produk "$namaProduk"?'),
+          content:
+              Text('Apakah Anda yakin ingin menghapus produk "$namaProduk"?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -221,8 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Batal'),
               style: TextButton.styleFrom(
-                backgroundColor:
-                    const Color.fromARGB(255, 81, 177, 255),
+                backgroundColor: const Color.fromARGB(255, 81, 177, 255),
                 foregroundColor: Colors.white,
               ),
             ),
@@ -243,8 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: const Text('Simpan'),
               style: TextButton.styleFrom(
-                backgroundColor:
-                    const Color.fromARGB(255, 33, 114, 243),
+                backgroundColor: const Color.fromARGB(255, 33, 114, 243),
                 foregroundColor: Colors.white,
               ),
             ),
@@ -324,28 +295,44 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: const Color.fromARGB(255, 7, 79, 186),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.account_circle),
             color: Colors.white,
-            onPressed: _showLogoutConfirmation,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
+            },
           ),
         ],
       ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _buildProdukPage(),
-          const TransaksiPage(),
-          const PelangganScreen(),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
+      body: _currentIndex == 5 ? const ProfilePage() : PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
-        backgroundColor: const Color.fromARGB(255, 7, 79, 186), // Background color
+        children: [
+          _buildProdukPage(),
+          const TransaksiPage(),
+          const RiwayatPage(),
+          const PelangganScreen(),
+          const RegistrasiPage(),
+          const ProfilePage(),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+          _pageController.jumpToPage(index);
+        },
+        backgroundColor:
+            const Color.fromARGB(255, 7, 80, 190), // Background color
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white70,
         items: const [
@@ -358,8 +345,16 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Transaksi',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Riwayat',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.people),
             label: 'Pelanggan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.app_registration),
+            label: 'Registrasi',
           ),
         ],
       ),
